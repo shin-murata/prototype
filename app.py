@@ -19,7 +19,7 @@ def get_db_connection():
 @app.route("/")
 def home():
     if "user_id" in session:
-        return render_template("search.html")
+        return redirect(url_for("search"))
     return redirect(url_for("login"))
 
 # ユーザー登録
@@ -35,7 +35,6 @@ def register():
             conn.execute("INSERT INTO USER (username, email, password_hash) VALUES (?, ?, ?)",
                          (username, email, password))
             conn.commit()
-            conn.close()
             flash("Registration successful. Please log in.", "success")
             return redirect(url_for("login"))
         except sqlite3.IntegrityError:
@@ -70,11 +69,16 @@ def search():
         region = request.form.get("region", "")
         instrument = request.form.get("instrument", "")
 
-        # 絞り込み検索
-        query = "SELECT * FROM FACILITY WHERE region LIKE ?"
-        facilities = conn.execute(query, (f"%{region}%",)).fetchall()
+        query = """
+        SELECT * FROM FACILITY
+        WHERE region LIKE ? AND id IN (
+            SELECT facility_id FROM FACILITY_INSTRUMENT WHERE instrument_id IN (
+                SELECT id FROM INSTRUMENT WHERE name LIKE ?
+            )
+        )
+        """
+        facilities = conn.execute(query, (f"%{region}%", f"%{instrument}%")).fetchall()
     else:
-        # 全データ表示
         facilities = conn.execute("SELECT * FROM FACILITY").fetchall()
 
     conn.close()
@@ -83,19 +87,21 @@ def search():
 # Google APIで施設データを取得して保存
 @app.route("/fetch_facilities")
 def fetch_facilities():
-    query = "全国 楽器練習場"
+    query = "コミュニティセンター"
     url = f"https://www.googleapis.com/customsearch/v1?q={query}&cx={GOOGLE_CUSTOM_SEARCH_ENGINE_ID}&key={GOOGLE_API_KEY}"
 
     try:
+        # Google APIにリクエスト
         response = requests.get(url)
-        response.raise_for_status()
+        response.raise_for_status()  # リクエストが成功したか確認
         results = response.json().get("items", [])
 
         if not results:
             flash("No results found from Google API.", "error")
             return redirect(url_for("home"))
 
-        conn = get_db_connection()
+        conn = get_db_connection()  # データベース接続
+
         for item in results:
             name = item.get("title", "名称不明")
             link = item.get("link", "リンク不明")
@@ -104,27 +110,43 @@ def fetch_facilities():
                 .get("cse_thumbnail", [{}])[0]
                 .get("src", "サムネイル不明")
             )
-            existing = conn.execute(
-                "SELECT id FROM FACILITY WHERE website_url = ?", (link,)
-            ).fetchone()
 
-            if not existing:
-                conn.execute(
-                    """
-                    INSERT INTO FACILITY (name, address, region, thumbnail_url, website_url)
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
-                    (name, "不明", "全国", thumbnail_url, link),
-                )
+            try:
+                # 既存のエントリを確認
+                existing = conn.execute(
+                    "SELECT id FROM FACILITY WHERE website_url = ?", (link,)
+                ).fetchone()
 
-        conn.commit()
+                if not existing:
+                    # データベースに挿入
+                    conn.execute(
+                        """
+                        INSERT INTO FACILITY (name, address, region, thumbnail_url, website_url)
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (name, "不明", "全国", thumbnail_url, link),
+                    )
+                    conn.commit()
+                    print(f"Inserted: {name}")  # 挿入成功の確認
+                else:
+                    print(f"Skipped (already exists): {name}")
+
+            except sqlite3.Error as db_error:
+                print(f"Database error during insert: {db_error}")
+
         flash("Facility data successfully fetched and stored.", "success")
-    except requests.exceptions.RequestException as e:
-        flash(f"An error occurred while fetching data: {e}", "error")
+
+    except requests.exceptions.RequestException as req_error:
+        # リクエストエラーの詳細をフラッシュ
+        flash(f"An error occurred while fetching data: {req_error}", "error")
+        print(f"Request error: {req_error}")
+
     finally:
         if 'conn' in locals():
-            conn.close()
+            conn.close()  # データベース接続を閉じる
+
     return redirect(url_for("home"))
+
 
 # ログアウト
 @app.route("/logout")
@@ -132,6 +154,21 @@ def logout():
     session.clear()
     flash("Logged out successfully.", "success")
     return redirect(url_for("login"))
+
+#APIテスト
+@app.route("/test_api")
+def test_api():
+    query = "全国 楽器練習場"
+    url = f"https://www.googleapis.com/customsearch/v1?q={query}&cx={GOOGLE_CUSTOM_SEARCH_ENGINE_ID}&key={GOOGLE_API_KEY}"
+    
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # HTTPエラーを検出
+        results = response.json()
+        return results  # APIのレスポンスを直接返す
+    except requests.exceptions.RequestException as e:
+        return f"API Error: {e}", 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)
