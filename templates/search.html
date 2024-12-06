@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}検索{% endblock %}
+{% block content %}
+<h2>練習場を検索</h2>
+<form method="POST" action="{{ url_for('search') }}">
+    <label for="query">キーワード:</label>
+    <input type="text" id="query" name="query" required>
+    <label for="region">地域:</label>
+    <input type="text" id="region" name="region" required>
+    <label for="instrument">楽器:</label>
+    <input type="text" id="instrument" name="instrument" required>
+    <button type="submit">検索</button>
+</form>
+{% endblock %}

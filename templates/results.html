@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}検索結果{% endblock %}
+{% block content %}
+<h2>検索結果</h2>
+<ul>
+    {% for result in results %}
+    <li>
+        <h3><a href="{{ result.link }}">{{ result.title }}</a></h3>
+        <p>{{ result.snippet }}</p>
+    </li>
+    {% else %}
+    <p>検索結果が見つかりませんでした。</p>
+    {% endfor %}
+</ul>
+{% endblock %}
