@@ -81,8 +81,10 @@ def search():
     else:
         facilities = conn.execute("SELECT * FROM FACILITY").fetchall()
 
+    # テンプレートにデータを渡す
+    return render_template("search.html", facilities=facilities)
+
     conn.close()
-    return render_template("results.html", facilities=facilities)
 
 # Google APIで施設データを取得して保存
 @app.route("/fetch_facilities")

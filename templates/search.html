@@ -4,11 +4,24 @@
 <h2>練習場を検索</h2>
 <form method="POST" action="{{ url_for('search') }}">
     <label for="query">キーワード:</label>
-    <input type="text" id="query" name="query" required>
+    <input type="text" id="query" name="query">
     <label for="region">地域:</label>
-    <input type="text" id="region" name="region" required>
+    <input type="text" id="region" name="region">
     <label for="instrument">楽器:</label>
-    <input type="text" id="instrument" name="instrument" required>
+    <input type="text" id="instrument" name="instrument">
     <button type="submit">検索</button>
 </form>
+
+<h2>検索結果</h2>
+<ul>
+    {% for facility in facilities %}
+    <li>
+        <h3><a href="{{ facility['website_url'] }}">{{ facility['name'] }}</a></h3>
+        <p>{{ facility['region'] }}</p>
+        <img src="{{ facility['thumbnail_url'] }}" alt="サムネイル" style="width:100px; height:auto;">
+    </li>
+    {% else %}
+    <p>検索結果が見つかりませんでした。</p>
+    {% endfor %}
+</ul>
 {% endblock %}

@@ -10,8 +10,9 @@
     <header>
         <h1>どこれん - 楽器練習場検索</h1>
         {% if session.get('user_id') %}
+        <p>こんにちは、{{ session.get('username') }}さん</p>
         <nav>
-            <a href="{{ url_for('home') }}">検索</a>
+            <a href="{{ url_for('home') }}">ホーム</a>
             <a href="{{ url_for('logout') }}">ログアウト</a>
         </nav>
         {% else %}
