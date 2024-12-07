@@ -87,7 +87,7 @@ def search():
 # Google APIで施設データを取得して保存
 @app.route("/fetch_facilities")
 def fetch_facilities():
-    query = "コミュニティセンター"
+    query = "熊本県 コミュニティセンター"
     url = f"https://www.googleapis.com/customsearch/v1?q={query}&cx={GOOGLE_CUSTOM_SEARCH_ENGINE_ID}&key={GOOGLE_API_KEY}"
 
     try:
@@ -128,6 +128,10 @@ def fetch_facilities():
                     )
                     conn.commit()
                     print(f"Inserted: {name}")  # 挿入成功の確認
+                
+                # テンプレートに検索結果を渡す
+                    return render_template("results.html", results=results)
+                
                 else:
                     print(f"Skipped (already exists): {name}")
 
@@ -135,6 +139,9 @@ def fetch_facilities():
                 print(f"Database error during insert: {db_error}")
 
         flash("Facility data successfully fetched and stored.", "success")
+
+        # テンプレートに検索結果を渡す
+        return render_template("results.html", results=results)
 
     except requests.exceptions.RequestException as req_error:
         # リクエストエラーの詳細をフラッシュ
@@ -158,7 +165,7 @@ def logout():
 #APIテスト
 @app.route("/test_api")
 def test_api():
-    query = "全国 楽器練習場"
+    query = "熊本県 コミュニティセンター"
     url = f"https://www.googleapis.com/customsearch/v1?q={query}&cx={GOOGLE_CUSTOM_SEARCH_ENGINE_ID}&key={GOOGLE_API_KEY}"
     
     try:
@@ -168,6 +175,25 @@ def test_api():
         return results  # APIのレスポンスを直接返す
     except requests.exceptions.RequestException as e:
         return f"API Error: {e}", 500
+
+@app.route("/debug")
+def debug():
+    try:
+        conn = get_db_connection()
+
+        # テーブル一覧を確認
+        tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table';").fetchall()
+        table_list = [table["name"] for table in tables]  # テーブル名をリストに変換
+
+        # FACILITYテーブルのデータを確認
+        rows = conn.execute("SELECT * FROM FACILITY;").fetchall()
+        data = [dict(row) for row in rows]  # データを辞書形式でリストに変換
+
+        conn.close()
+        return {"tables": table_list, "data": data}, 200  # 確認データをJSON形式で返す
+    except Exception as e:
+        return {"error": str(e)}, 500
+
 
 
 if __name__ == "__main__":
