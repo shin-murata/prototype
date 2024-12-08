@@ -81,31 +81,21 @@ def search():
     cursor.execute("SELECT g_id, specification FROM instrument_specs")
     instruments = cursor.fetchall()
 
-    facilities = []  # 検索結果用
+    facilities = []
 
     if request.method == "POST":
         region = request.form.get("region", "")
-        instrument_id = request.form.get("instrument_id", "")
-
-        # SQLクエリで community_centers と instrument_specs を結合
         query = """
-        SELECT cc.name, cc.address, ispec.specification
+        SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
         LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
-        WHERE (cc.address LIKE ? OR cc.name LIKE ?)
+        WHERE cc.address LIKE ? OR cc.name LIKE ?
         """
-        params = [f"%{region}%", f"%{region}%"]
-
-        if instrument_id:  # 楽器が選択されている場合
-            query += " AND cc.gakki = ?"
-            params.append(instrument_id)
-
-        cursor.execute(query, params)
+        cursor.execute(query, (f"%{region}%", f"%{region}%"))
         facilities = cursor.fetchall()
     else:
-        # 検索が行われていない場合、すべての施設を取得
         cursor.execute("""
-        SELECT cc.name, cc.address, ispec.specification
+        SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
         LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
         """)
@@ -114,8 +104,39 @@ def search():
     cursor.close()
     conn.close()
 
-    # テンプレートにデータを渡す
     return render_template("search.html", facilities=facilities, instruments=instruments)
+
+# 詳細ページ
+@app.route("/facility/<int:facility_id>")
+def facility_detail(facility_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    query = """
+    SELECT cc.name, cc.address, cc.tel, cc.website_url, cc.map_url, ispec.specification
+    FROM community_centers cc
+    LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
+    WHERE cc.id = ?
+    """
+    cursor.execute(query, (facility_id,))
+    facility = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if facility:
+        # map_url を埋め込み形式に変換
+        if facility['map_url'] and "google.com/maps" in facility['map_url']:
+            if "embed" not in facility['map_url']:
+                facility['map_url'] = facility['map_url'].replace(
+                    "/maps/",
+                    "/maps/embed/"
+                )
+    else:
+        return "施設が見つかりません", 404
+
+    return render_template("facility_detail.html", facility=facility)
+
 
 # ログアウト
 @app.route("/logout")

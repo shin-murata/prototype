@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}施設詳細{% endblock %}
+{% block content %}
+<h2>{{ facility['name'] }}</h2>
+<p><strong>住所:</strong> {{ facility['address'] }}</p>
+<p><strong>電話番号:</strong> {{ facility['tel'] }}</p>
+<p><strong>ウェブサイト:</strong> <a href="{{ facility['website_url'] }}" target="_blank">{{ facility['website_url'] }}</a></p>
+<p><strong>楽器対応:</strong> {{ facility['specification'] if facility['specification'] else '対応情報なし' }}</p>
+<p><strong>地図:</strong></p>
+<iframe src="{{ facility['map_url'] }}" width="600" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+
+<a href="{{ url_for('search') }}">← 戻る</a>
+{% endblock %}

@@ -25,11 +25,12 @@
     </tr>
     {% for facility in facilities %}
     <tr>
-        <td>{{ facility['name'] }}</td>
+        <td><a href="{{ url_for('facility_detail', facility_id=facility['id']) }}">{{ facility['name'] }}</a></td>
         <td>{{ facility['address'] }}</td>
         <td>{{ facility['specification'] if facility['specification'] else '対応情報なし' }}</td>
     </tr>
     {% endfor %}
 </table>
+
 
 {% endblock %}
