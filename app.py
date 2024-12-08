@@ -85,15 +85,26 @@ def search():
 
     if request.method == "POST":
         region = request.form.get("region", "")
+        instrument_id = request.form.get("instrument_id", "")
+
+        # 基本クエリ
         query = """
         SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
         LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
-        WHERE cc.address LIKE ? OR cc.name LIKE ?
+        WHERE (cc.address LIKE ? OR cc.name LIKE ?)
         """
-        cursor.execute(query, (f"%{region}%", f"%{region}%"))
+        params = [f"%{region}%", f"%{region}%"]
+
+        # 楽器条件を追加
+        if instrument_id:
+            query += " AND cc.gakki = ?"
+            params.append(instrument_id)
+
+        cursor.execute(query, params)
         facilities = cursor.fetchall()
     else:
+        # 全施設のデータを取得
         cursor.execute("""
         SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
