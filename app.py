@@ -77,23 +77,45 @@ def search():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    # 楽器仕様を取得
+    cursor.execute("SELECT g_id, specification FROM instrument_specs")
+    instruments = cursor.fetchall()
+
+    facilities = []  # 検索結果用
+
     if request.method == "POST":
         region = request.form.get("region", "")
+        instrument_id = request.form.get("instrument_id", "")
+
+        # SQLクエリで community_centers と instrument_specs を結合
         query = """
-        SELECT * FROM community_centers
-        WHERE address LIKE ? OR name LIKE ?
+        SELECT cc.name, cc.address, ispec.specification
+        FROM community_centers cc
+        LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
+        WHERE (cc.address LIKE ? OR cc.name LIKE ?)
         """
-        cursor.execute(query, (f"%{region}%", f"%{region}%"))  # SQLiteでは "?" を使用
+        params = [f"%{region}%", f"%{region}%"]
+
+        if instrument_id:  # 楽器が選択されている場合
+            query += " AND cc.gakki = ?"
+            params.append(instrument_id)
+
+        cursor.execute(query, params)
         facilities = cursor.fetchall()
     else:
-        cursor.execute("SELECT * FROM community_centers")
+        # 検索が行われていない場合、すべての施設を取得
+        cursor.execute("""
+        SELECT cc.name, cc.address, ispec.specification
+        FROM community_centers cc
+        LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
+        """)
         facilities = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
     # テンプレートにデータを渡す
-    return render_template("search.html", facilities=facilities)
+    return render_template("search.html", facilities=facilities, instruments=instruments)
 
 # ログアウト
 @app.route("/logout")
