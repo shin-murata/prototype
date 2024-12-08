@@ -124,7 +124,7 @@ def facility_detail(facility_id):
     cursor = conn.cursor()
 
     query = """
-    SELECT cc.name, cc.address, cc.tel, cc.website_url, cc.map_url, ispec.specification
+    SELECT cc.name, cc.address, cc.tel, cc.website_url, cc.map_url, cc.parking_slots, ispec.specification
     FROM community_centers cc
     LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
     WHERE cc.id = ?
