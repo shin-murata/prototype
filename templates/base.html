@@ -32,6 +32,44 @@
         </ul>
         {% endif %}
         {% endwith %}
+        
+        <!-- 写真エリア -->
+        <div class="photo">写真</div>
+
+        <!-- サイトの説明 -->
+        <div class="site-description">
+            <p>楽器練習場を簡単に検索できるウェブアプリです。</p>
+        </div>
+
+        <!-- 検索オプション -->
+        <div class="search-options">
+            <div>
+                <label for="area">地区を選んでください:</label>
+                <select id="area" name="area">
+                    <option value="tokyo">東京</option>
+                    <option value="osaka">大阪</option>
+                    <option value="nagoya">名古屋</option>
+                </select>
+            </div>
+            <div>
+                <label for="genre">ジャンルを選んでください:</label>
+                <select id="genre" name="genre">
+                    <option value="rock">ロック</option>
+                    <option value="jazz">ジャズ</option>
+                    <option value="classical">クラシック</option>
+                </select>
+            </div>
+            <div>
+                <label for="size">広さを選んでください:</label>
+                <select id="size" name="size">
+                    <option value="small">小</option>
+                    <option value="medium">中</option>
+                    <option value="large">大</option>
+                </select>
+            </div>
+            <button type="submit">検索</button>
+        </div>
+        
         {% block content %}{% endblock %}
     </main>
 </body>
