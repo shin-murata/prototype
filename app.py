@@ -118,7 +118,6 @@ def search():
     return render_template("search.html", facilities=facilities, instruments=instruments)
 
 # 詳細ページ
-# 詳細ページ
 @app.route("/facility/<int:facility_id>")
 def facility_detail(facility_id):
     conn = get_db_connection()
@@ -157,7 +156,6 @@ def facility_detail(facility_id):
         return "施設が見つかりません", 404
 
     return render_template("facility_detail.html", facility=facility)
-
 
 # ログアウト
 @app.route("/logout")

@@ -2,35 +2,60 @@
 {% block title %}検索{% endblock %}
 {% block content %}
 <h2>練習場を検索</h2>
-<form method="POST" action="/search">
-    <label for="region">地域:</label>
-    <input type="text" id="region" name="region">
-    
-    <label for="instrument_id">楽器:</label>
-    <select id="instrument_id" name="instrument_id">
-        <option value="">-- 選択してください --</option>
-        {% for instrument in instruments %}
-        <option value="{{ instrument['g_id'] }}">{{ instrument['specification'] }}</option>
-        {% endfor %}
-    </select>
 
+<!-- 検索フォーム -->
+<form method="POST" action="{{ url_for('search') }}">
+    <div>
+        <label for="region">地域:</label>
+        <input 
+            type="text" 
+            id="region" 
+            name="region" 
+            placeholder="地域名を入力" 
+            value="{{ request.form.get('region', '') }}">
+    </div>
+    <div>
+        <label for="instrument_id">楽器:</label>
+        <select id="instrument_id" name="instrument_id">
+            <option value="">-- 選択してください --</option>
+            {% for instrument in instruments %}
+            <option value="{{ instrument['g_id'] }}" 
+                {% if request.form.get('instrument_id') == str(instrument['g_id']) %}selected{% endif %}>
+                {{ instrument['specification'] }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
     <button type="submit">検索</button>
 </form>
 
+<!-- 検索結果 -->
+<h3>検索結果</h3>
+{% if facilities %}
 <table>
-    <tr>
-        <th>施設名</th>
-        <th>住所</th>
-        <th>楽器対応</th>
-    </tr>
-    {% for facility in facilities %}
-    <tr>
-        <td><a href="{{ url_for('facility_detail', facility_id=facility['id']) }}">{{ facility['name'] }}</a></td>
-        <td>{{ facility['address'] }}</td>
-        <td>{{ facility['specification'] if facility['specification'] else '対応情報なし' }}</td>
-    </tr>
-    {% endfor %}
+    <thead>
+        <tr>
+            <th>施設名</th>
+            <th>住所</th>
+            <th>楽器対応</th>
+            <th>詳細</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for facility in facilities %}
+        <tr>
+            <td>{{ facility['name'] }}</td>
+            <td>{{ facility['address'] }}</td>
+            <td>{{ facility['specification'] if facility['specification'] else '対応情報なし' }}</td>
+            <td>
+                <a href="{{ url_for('facility_detail', facility_id=facility['id']) }}">詳細を見る</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
 </table>
-
+{% else %}
+<p>該当する施設が見つかりませんでした。</p>
+{% endif %}
 
 {% endblock %}
