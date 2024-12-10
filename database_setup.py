@@ -62,9 +62,24 @@ def initialize_database():
     );
     """)
 
+    # community_centers テーブルの追加
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS community_centers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        postal_code TEXT NOT NULL,
+        address TEXT NOT NULL,
+        tel TEXT,
+        fax TEXT,
+        thumbnail_url TEXT,
+        website_url TEXT,
+        map_url TEXT
+    );
+    """)
+
     conn.commit()
     conn.close()
-    print("Database initialized successfully!")
+    print("Database initialized successfully with community_centers table!")
 
 # 実行時にデータベースを初期化
 if __name__ == "__main__":
