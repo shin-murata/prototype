@@ -3,6 +3,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from config import GOOGLE_API_KEY, GOOGLE_CUSTOM_SEARCH_ENGINE_ID, SECRET_KEY
 
+
 app = Flask(__name__)
 app.secret_key = SECRET_KEY  # セッション管理用の秘密鍵
 
@@ -182,6 +183,102 @@ def debug():
         return {"data": [dict(row) for row in rows]}, 200  # データを辞書形式に変換して返す
     except Exception as e:
         return {"error": str(e)}, 500
+    
+@app.route('/load_excel', methods=['POST'])
+def load_excel_data():
+    import pandas as pd
+    import os
+    import glob
+
+    # ディレクトリ内のすべてのExcelファイルを取得
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    excel_files = glob.glob(os.path.join(BASE_DIR, "data", "*.xlsx"))
+
+    # データベースに接続
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    total_inserted = 0  # 挿入したデータの合計件数
+    total_skipped = 0  # 重複のためスキップしたデータの件数
+
+    try:
+        for excel_file in excel_files:
+            print(f"処理中のファイル: {excel_file}")
+
+            # エクセルデータを読み込む
+            df = pd.read_excel(excel_file, sheet_name="公共施設一覧_フォーマット")
+            print(f"読み込んだデータ行数: {len(df)}")
+
+            # コミュニティセンターに限定
+            community_centers = df[df['名称'].str.contains("コミュニティセンター", na=False)]
+            print(f"フィルタリングされた行数: {len(community_centers)}")
+
+            # 必要な列を選択・リネーム
+            community_centers = community_centers.rename(columns={
+                '名称': 'name',
+                '郵便番号': 'postal_code',
+                '所在地_連結標記': 'address',
+                '電話番号': 'tel',
+                'URL': 'website_url',
+                '画像': 'thumbnail_url'
+            })
+
+            # 不足している列を補完
+            community_centers['fax'] = None
+            community_centers['map_url'] = None
+            community_centers['gakki'] = None
+            community_centers['parking_slots'] = 0
+            community_centers['capacity_info'] = None
+            community_centers['soundproofing_info'] = None
+
+            # データベースに挿入
+            for _, row in community_centers.iterrows():
+                # 重複チェッククエリ
+                cursor.execute("""
+                    SELECT COUNT(*) FROM community_centers 
+                    WHERE name = ? AND address = ?
+                """, (row['name'], row['address']))
+
+                # 既存データがあればスキップ
+                if cursor.fetchone()[0] > 0:
+                    total_skipped += 1
+                    print(f"重複のためスキップ: {row['name']} - {row['address']}")
+                    continue
+
+                # 新しいデータを挿入
+                cursor.execute("""
+                    INSERT INTO community_centers 
+                    (name, postal_code, address, tel, fax, thumbnail_url, website_url, map_url, gakki, parking_slots, capacity_info, soundproofing_info) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    row['name'], 
+                    row['postal_code'], 
+                    row['address'], 
+                    row['tel'], 
+                    row['fax'], 
+                    row['thumbnail_url'], 
+                    row['website_url'], 
+                    row['map_url'], 
+                    row['gakki'], 
+                    row['parking_slots'], 
+                    row['capacity_info'], 
+                    row['soundproofing_info']
+                ))
+
+                total_inserted += 1
+
+        conn.commit()
+        flash(f"{total_inserted} 件のデータを挿入しました。{total_skipped} 件のデータをスキップしました。", "success")
+        return f"{total_inserted} 件のデータを挿入しました。{total_skipped} 件のデータをスキップしました。", 200
+
+    except Exception as e:
+        print(f"エラーが発生しました: {e}")
+        return f"エラーが発生しました: {e}", 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True)
