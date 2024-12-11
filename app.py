@@ -76,19 +76,15 @@ def login():
 @app.route("/search", methods=["GET", "POST"])
 def search():
     conn = get_db_connection()
-    cursor = conn.cursor()
 
     # 楽器仕様を取得
-    cursor.execute("SELECT g_id, specification FROM instrument_specs")
-    instruments = cursor.fetchall()
+    instruments = conn.execute("SELECT g_id, specification FROM instrument_specs").fetchall()
 
     facilities = []
-
     if request.method == "POST":
         region = request.form.get("region", "")
         instrument_id = request.form.get("instrument_id", "")
 
-        # 基本クエリ
         query = """
         SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
@@ -97,36 +93,28 @@ def search():
         """
         params = [f"%{region}%", f"%{region}%"]
 
-        # 楽器条件を追加
         if instrument_id:
             query += " AND cc.gakki = ?"
             params.append(instrument_id)
 
-        cursor.execute(query, params)
-        facilities = cursor.fetchall()
+        facilities = conn.execute(query, params).fetchall()
     else:
-        # 全施設のデータを取得
-        cursor.execute("""
+        facilities = conn.execute("""
         SELECT cc.id, cc.name, cc.address, ispec.specification
         FROM community_centers cc
         LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
-        """)
-        facilities = cursor.fetchall()
+        """).fetchall()
 
-    cursor.close()
     conn.close()
-
     return render_template("search.html", facilities=facilities, instruments=instruments)
 
-# 詳細ページ
 # 詳細ページ
 @app.route("/facility/<int:facility_id>")
 def facility_detail(facility_id):
     conn = get_db_connection()
-    cursor = conn.cursor()
-
     query = """
     SELECT 
+        cc.id, 
         cc.name, 
         cc.address, 
         cc.tel, 
@@ -140,24 +128,63 @@ def facility_detail(facility_id):
     LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
     WHERE cc.id = ?
     """
-    cursor.execute(query, (facility_id,))
-    facility = cursor.fetchone()
-
-    cursor.close()
+    facility = conn.execute(query, (facility_id,)).fetchone()
     conn.close()
 
     if facility:
         # map_url を埋め込み形式に変換
-        if facility['map_url'] and "google.com/maps" in facility['map_url']:
-            if "embed" not in facility['map_url']:
-                facility['map_url'] = facility['map_url'].replace(
-                    "/maps/",
-                    "/maps/embed/"
-                )
+        if facility["map_url"] and "google.com/maps" in facility["map_url"]:
+            if "embed" not in facility["map_url"]:
+                facility["map_url"] = facility["map_url"].replace("/maps/", "/maps/embed/")
     else:
         return "施設が見つかりません", 404
 
     return render_template("facility_detail.html", facility=facility)
+
+@app.route("/facility/<int:facility_id>/edit", methods=["GET", "POST"])
+def edit_facility(facility_id):
+    conn = get_db_connection()
+    if request.method == "POST":
+        # POSTメソッドで送信されたデータを取得して更新
+        capacity_info = request.form.get("capacity_info")
+        soundproofing_info = request.form.get("soundproofing_info")
+        specification = request.form.get("specification")
+
+        # データの更新
+        conn.execute(
+            "UPDATE community_centers SET capacity_info = ?, soundproofing_info = ? WHERE id = ?",
+            (capacity_info, soundproofing_info, facility_id),
+        )
+        conn.execute(
+            """
+            UPDATE instrument_specs SET specification = ? 
+            WHERE g_id = (SELECT gakki FROM community_centers WHERE id = ?)
+            """,
+            (specification, facility_id),
+        )
+        conn.commit()
+        conn.close()
+        return redirect(url_for("facility_detail", facility_id=facility_id))
+
+    # ここに追加（GETメソッドで施設情報を取得）
+    facility = conn.execute("""
+        SELECT 
+            cc.id, 
+            cc.name, 
+            cc.capacity_info, 
+            cc.soundproofing_info, 
+            ispec.specification
+        FROM community_centers cc
+        LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
+        WHERE cc.id = ?
+        """, (facility_id,)).fetchone()
+
+    if facility is None:
+        conn.close()
+        return "No facility found with the given ID", 404  # 適切なエラーメッセージを返す
+
+    conn.close()
+    return render_template("edit_facility.html", facility=facility)
 
 
 # ログアウト
