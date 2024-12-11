@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 from config import GOOGLE_API_KEY, GOOGLE_CUSTOM_SEARCH_ENGINE_ID, SECRET_KEY
+import urllib.parse
 
 
 app = Flask(__name__)
@@ -147,6 +148,9 @@ def facility_detail(facility_id):
     conn.close()
 
     if facility:
+        # 辞書型に変換して操作可能にする
+        facility = dict(facility)
+
         # map_url を埋め込み形式に変換
         if facility['map_url'] and "google.com/maps" in facility['map_url']:
             if "embed" not in facility['map_url']:
@@ -244,6 +248,11 @@ def load_excel_data():
                     total_skipped += 1
                     print(f"重複のためスキップ: {row['name']} - {row['address']}")
                     continue
+                # Google Maps URLを生成
+                map_url = None  # row['map_url'] を直接操作しない
+                # Google Maps URLを生成（埋め込み形式）
+                if pd.notnull(row['address']):
+                     map_url = f"https://www.google.com/maps/embed/v1/place?key={GOOGLE_API_KEY}&q={urllib.parse.quote(row['address'])}"
 
                 # 新しいデータを挿入
                 cursor.execute("""
@@ -258,7 +267,7 @@ def load_excel_data():
                     row['fax'], 
                     row['thumbnail_url'], 
                     row['website_url'], 
-                    row['map_url'], 
+                    map_url,  # 計算済みの map_url を直接渡す
                     row['gakki'], 
                     row['parking_slots'], 
                     row['capacity_info'], 
@@ -278,6 +287,70 @@ def load_excel_data():
     finally:
         cursor.close()
         conn.close()
+
+@app.route('/fix_map_urls', methods=['GET'])
+def fix_map_urls():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # map_url に不要な文字列を含む場合の修正
+    cursor.execute("""
+        SELECT id, map_url FROM community_centers
+        WHERE map_url LIKE '%width=%'
+    """)
+    rows = cursor.fetchall()
+
+    for row in rows:
+        facility_id = row['id']
+        map_url = row['map_url']
+
+        # 不要なHTML属性を削除
+        clean_url = map_url.split('"')[0]
+
+        # データベースを更新
+        cursor.execute("""
+            UPDATE community_centers
+            SET map_url = ?
+            WHERE id = ?
+        """, (clean_url, facility_id))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return "map_url が修正されました。", 200
+
+@app.route('/update_map_urls', methods=['GET'])
+def update_map_urls():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # すべての施設のデータを取得
+    cursor.execute("""
+        SELECT id, address FROM community_centers
+    """)
+    facilities = cursor.fetchall()
+
+    updated_count = 0
+
+    for facility in facilities:
+        facility_id = facility['id']
+        address = facility['address']
+        if address:
+            # Google Maps URLを生成
+            map_url = f"https://www.google.com/maps/embed/v1/place?key={GOOGLE_API_KEY}&q={urllib.parse.quote(address)}"
+
+            # データベースを更新
+            cursor.execute("""
+                UPDATE community_centers SET map_url = ? WHERE id = ?
+            """, (map_url, facility_id))
+            updated_count += 1
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return f"{updated_count} 件の map_url を更新しました。", 200
 
 
 if __name__ == "__main__":
