@@ -1,0 +1,184 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+}
+
+header {
+    background-color: #ffe4b2;
+    padding: 20px;
+    text-align: center;
+}
+
+.header-container h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #333;
+}
+
+.header-container p {
+    margin: 5px 0;
+    font-size: 1.2rem;
+    color: #555;
+}
+
+nav {
+    margin-top: 10px;
+}
+
+nav a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #333;
+    font-size: 1rem;
+}
+
+main {
+    padding: 20px;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background-color: #ffe4b2;
+    margin-top: 20px;
+}
+
+.search-container, .results-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.search-container h2, .results-container h2 {
+    text-align: center;
+    color: #333;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-size: 1rem;
+    color: #555;
+}
+
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+button.search-btn {
+    background-color: #ffa500;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button.search-btn:hover {
+    background-color: #ff7f00;
+}
+
+.search-results {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.search-results th, .search-results td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+.search-results th {
+    background-color: #ffa500;
+    color: white;
+}
+
+.search-results tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* フォーム全体の横並びスタイル */
+.horizontal-form {
+    display: flex; /* 横並びにする */
+    align-items: center; /* 垂直方向の中央揃え */
+    justify-content: flex-start; /* 左詰め配置 */
+    gap: 8px; /* 要素間の隙間を指定（px単位で調整可能） */
+    width: 100%; /* フォーム全体の幅を100%に広げる */
+}
+
+/* 各フォームグループのスタイル */
+.horizontal-form .form-group {
+    flex: 1; /* 各フォームグループの幅を均等にする */
+    display: flex; /* ラベルと入力欄を横並びまたは縦並びに設定可能 */
+    flex-direction: column; /* デフォルトで縦並び（必要に応じて変更可能） */
+    margin: 0; /* 不要なマージンを削除 */
+}
+
+/* 入力欄とセレクトボックスのスタイル */
+.horizontal-form input,
+.horizontal-form select {
+    flex: 1; /* 入力欄とセレクトボックスの幅を均等に広げる */
+    min-width: 120px; /* 入力欄の最小幅 */
+    max-width: 200px; /* 入力欄の最大幅 */
+    padding: 5px; /* 内側の余白 */
+    font-size: 0.9rem; /* フォントサイズ */
+    border: 1px solid #ddd; /* 枠線の色と太さ */
+    border-radius: 5px; /* 角を丸める */
+}
+
+/* ラベルのスタイル */
+.horizontal-form label {
+    font-size: 0.8rem; /* ラベルのフォントサイズ */
+    margin-bottom: 4px; /* ラベルと入力欄の間隔 */
+    min-width: 60px; /* ラベルの幅を固定することで揃える */
+    text-align: right; /* ラベルのテキストを右揃え */
+}
+
+/* ボタンのスタイル */
+.horizontal-form .search-btn {
+    flex: 0 0 auto; /* ボタンの幅を固定 */
+    width: 80px; /* ボタンの横幅 */
+    background-color: #ffa500; /* ボタンの背景色 */
+    color: white; /* ボタンの文字色 */
+    border: none; /* ボタンの枠線なし */
+    padding: 8px; /* ボタン内の余白 */
+    font-size: 0.9rem; /* ボタンのフォントサイズ */
+    border-radius: 5px; /* ボタンの角を丸める */
+    cursor: pointer; /* カーソルをポインターにする */
+}
+
+.horizontal-form .search-btn:hover {
+    background-color: #ff7f00; /* ホバー時のボタン背景色 */
+}
+
+/* 見出し（検索タイトル）のスタイル */
+.search-container h2 {
+    margin-bottom: 10px; /* 見出しとフォーム間の余白 */
+    font-size: 1.2rem; /* 見出しのフォントサイズ */
+    color: #333; /* 見出しの文字色 */
+    text-align: left; /* 見出しの左揃え */
+}
+
+
+@media (max-width: 768px) {
+    .horizontal-form {
+        flex-direction: column; /* 画面が狭い場合は縦並びにする */
+    }
+
+    .horizontal-form .form-group {
+        width: 100%; /* 各要素を幅いっぱいに広げる */
+    }
+}
