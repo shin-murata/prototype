@@ -3,14 +3,7 @@
 {% block content %}
 <!-- 地図を一番上に配置 -->
 <p><strong>地図:</strong></p>
-<iframe 
-    src="{{ facility['map_url'] }}" 
-    width="600" 
-    height="400" 
-    style="border:0;" 
-    allowfullscreen="" 
-    loading="lazy">
-</iframe>
+<iframe src="{{ facility['map_url'] }}" width="600" height="400" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
 
 <h2>{{ facility['name'] }}</h2>
 <p><strong>住所:</strong> {{ facility['address'] }}</p>
@@ -20,6 +13,7 @@
 <p><strong>駐車場台数:</strong> {{ facility['parking_slots'] if facility['parking_slots'] else '情報なし' }}</p>
 <p><strong>対応可能人数:</strong> {{ facility['capacity_info'] if facility['capacity_info'] else '情報なし' }}</p>
 <p><strong>防音設備:</strong> {{ facility['soundproofing_info'] if facility['soundproofing_info'] else '情報なし' }}</p>
+<a href="{{ url_for('edit_facility', facility_id=facility['id']) }}">編集する</a>
 
 <a href="{{ url_for('search') }}">← 戻る</a>
 {% endblock %}
