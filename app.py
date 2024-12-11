@@ -120,12 +120,14 @@ def search():
     return render_template("search.html", facilities=facilities, instruments=instruments)
 
 # 詳細ページ
+# 詳細ページ
 @app.route("/facility/<int:facility_id>")
 def facility_detail(facility_id):
     conn = get_db_connection()
+    cursor = conn.cursor()
+
     query = """
     SELECT 
-        cc.id, 
         cc.name, 
         cc.address, 
         cc.tel, 
@@ -139,63 +141,28 @@ def facility_detail(facility_id):
     LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
     WHERE cc.id = ?
     """
-    facility = conn.execute(query, (facility_id,)).fetchone()
+    cursor.execute(query, (facility_id,))
+    facility = cursor.fetchone()
+
+    cursor.close()
     conn.close()
 
     if facility:
+        # 辞書型に変換して操作可能にする
+        facility = dict(facility)
+
         # map_url を埋め込み形式に変換
-        if facility["map_url"] and "google.com/maps" in facility["map_url"]:
-            if "embed" not in facility["map_url"]:
-                facility["map_url"] = facility["map_url"].replace("/maps/", "/maps/embed/")
+        if facility['map_url'] and "google.com/maps" in facility['map_url']:
+            if "embed" not in facility['map_url']:
+                facility['map_url'] = facility['map_url'].replace(
+                    "/maps/",
+                    "/maps/embed/"
+                )
     else:
         return "施設が見つかりません", 404
 
     return render_template("facility_detail.html", facility=facility)
-@app.route("/facility/<int:facility_id>/edit", methods=["GET", "POST"])
-def edit_facility(facility_id):
-    conn = get_db_connection()
 
-    if request.method == "POST":
-        capacity_info = request.form.get("capacity_info")
-        soundproofing_info = request.form.get("soundproofing_info")
-        instrument_id = request.form.get("instrument_id")
-
-        # データの更新
-        conn.execute(
-            "UPDATE community_centers SET capacity_info = ?, soundproofing_info = ?, gakki = ? WHERE id = ?",
-            (capacity_info, soundproofing_info, instrument_id, facility_id),
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for("facility_detail", facility_id=facility_id))
-
-    # 施設情報を取得
-    facility = conn.execute("""
-        SELECT 
-            cc.id, 
-            cc.name, 
-            cc.capacity_info, 
-            cc.soundproofing_info, 
-            cc.gakki, 
-            ispec.specification
-        FROM community_centers cc
-        LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
-        WHERE cc.id = ?
-        """, (facility_id,)).fetchone()
-
-    # 楽器リストを取得
-    instruments = conn.execute("""
-        SELECT g_id, specification
-        FROM instrument_specs
-        """).fetchall()
-
-    conn.close()
-
-    if facility is None:
-        return "施設が見つかりません", 404
-
-    # テンプレートに facility と instruments を渡す
-    return render_template("edit_facility.html", facility=facility, instruments=instruments)
 
 # ログアウト
 @app.route("/logout")
