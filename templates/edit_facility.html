@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>施設情報の編集</title>
+</head>
+<body>
+    <h1>{{ facility['name'] }} の編集</h1>
+
+    <form method="POST">
+        <label for="capacity_info">対応可能人数:</label>
+        <input type="text" name="capacity_info" id="capacity_info" value="{{ facility['capacity_info'] }}">
+
+        <label for="soundproofing_info">防音設備:</label>
+        <input type="text" name="soundproofing_info" id="soundproofing_info" value="{{ facility['soundproofing_info'] }}">
+
+        <label for="instrument_id">楽器対応:</label>
+        <select id="instrument_id" name="instrument_id">
+            <option value="">-- 選択してください --</option>
+            {% for instrument in instruments %}
+            <option value="{{ instrument['g_id'] }}" {% if instrument['g_id'] == facility['gakki'] %}selected{% endif %}>
+                {{ instrument['specification'] }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <button type="submit">保存</button>
+    </form>
+
+    <a href="{{ url_for('facility_detail', facility_id=facility['id']) }}">戻る</a>
+</body>
+</html>
