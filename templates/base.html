@@ -8,19 +8,22 @@
 </head>
 <body>
     <header>
-        <h1>どこれん - 楽器練習場検索</h1>
-        {% if session.get('user_id') %}
-        <p>こんにちは、{{ session.get('username') }}さん</p>
-        <nav>
-            <a href="{{ url_for('home') }}">ホーム</a>
-            <a href="{{ url_for('logout') }}">ログアウト</a>
-        </nav>
-        {% else %}
-        <nav>
-            <a href="{{ url_for('login') }}">ログイン</a>
-            <a href="{{ url_for('register') }}">登録</a>
-        </nav>
-        {% endif %}
+        <div class="header-container">
+            <!-- バナー画像を追加 -->
+            <img src="{{ url_for('static', filename='images/banner.jpg') }}" alt="どこれんバナー" class="banner">
+            {% if session.get('user_id') %}
+            <p>こんにちは、{{ session.get('username') }}さん</p>
+            <nav>
+                <a href="{{ url_for('home') }}">ホーム</a>
+                <a href="{{ url_for('logout') }}">ログアウト</a>
+            </nav>
+            {% else %}
+            <nav>
+                <a href="{{ url_for('login') }}">ログイン</a>
+                <a href="{{ url_for('register') }}">登録</a>
+            </nav>
+            {% endif %}
+        </div>
     </header>
     <main>
         {% with messages = get_flashed_messages(with_categories=True) %}
@@ -34,5 +37,8 @@
         {% endwith %}
         {% block content %}{% endblock %}
     </main>
+    <footer>
+        <p>© 2024 どこれん</p>
+    </footer>
 </body>
 </html>
