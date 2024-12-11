@@ -140,51 +140,51 @@ def facility_detail(facility_id):
         return "施設が見つかりません", 404
 
     return render_template("facility_detail.html", facility=facility)
-
 @app.route("/facility/<int:facility_id>/edit", methods=["GET", "POST"])
 def edit_facility(facility_id):
     conn = get_db_connection()
+
     if request.method == "POST":
-        # POSTメソッドで送信されたデータを取得して更新
         capacity_info = request.form.get("capacity_info")
         soundproofing_info = request.form.get("soundproofing_info")
-        specification = request.form.get("specification")
+        instrument_id = request.form.get("instrument_id")
 
         # データの更新
         conn.execute(
-            "UPDATE community_centers SET capacity_info = ?, soundproofing_info = ? WHERE id = ?",
-            (capacity_info, soundproofing_info, facility_id),
-        )
-        conn.execute(
-            """
-            UPDATE instrument_specs SET specification = ? 
-            WHERE g_id = (SELECT gakki FROM community_centers WHERE id = ?)
-            """,
-            (specification, facility_id),
+            "UPDATE community_centers SET capacity_info = ?, soundproofing_info = ?, gakki = ? WHERE id = ?",
+            (capacity_info, soundproofing_info, instrument_id, facility_id),
         )
         conn.commit()
         conn.close()
         return redirect(url_for("facility_detail", facility_id=facility_id))
 
-    # ここに追加（GETメソッドで施設情報を取得）
+    # 施設情報を取得
     facility = conn.execute("""
         SELECT 
             cc.id, 
             cc.name, 
             cc.capacity_info, 
             cc.soundproofing_info, 
+            cc.gakki, 
             ispec.specification
         FROM community_centers cc
         LEFT JOIN instrument_specs ispec ON cc.gakki = ispec.g_id
         WHERE cc.id = ?
         """, (facility_id,)).fetchone()
 
-    if facility is None:
-        conn.close()
-        return "No facility found with the given ID", 404  # 適切なエラーメッセージを返す
+    # 楽器リストを取得
+    instruments = conn.execute("""
+        SELECT g_id, specification
+        FROM instrument_specs
+        """).fetchall()
 
     conn.close()
-    return render_template("edit_facility.html", facility=facility)
+
+    if facility is None:
+        return "施設が見つかりません", 404
+
+    # テンプレートに facility と instruments を渡す
+    return render_template("edit_facility.html", facility=facility, instruments=instruments)
 
 
 # ログアウト

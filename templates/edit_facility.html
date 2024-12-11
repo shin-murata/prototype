@@ -15,8 +15,15 @@
         <label for="soundproofing_info">防音設備:</label>
         <input type="text" name="soundproofing_info" id="soundproofing_info" value="{{ facility['soundproofing_info'] }}">
 
-        <label for="specification">楽器対応:</label>
-        <input type="text" name="specification" id="specification" value="{{ facility['specification'] }}">
+        <label for="instrument_id">楽器対応:</label>
+        <select id="instrument_id" name="instrument_id">
+            <option value="">-- 選択してください --</option>
+            {% for instrument in instruments %}
+            <option value="{{ instrument['g_id'] }}" {% if instrument['g_id'] == facility['gakki'] %}selected{% endif %}>
+                {{ instrument['specification'] }}
+            </option>
+            {% endfor %}
+        </select>
 
         <button type="submit">保存</button>
     </form>
