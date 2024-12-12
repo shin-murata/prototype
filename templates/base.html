@@ -14,13 +14,14 @@
             {% if session.get('user_id') %}
             <p>こんにちは、{{ session.get('username') }}さん</p>
             <nav>
-                <a href="{{ url_for('home') }}">ホーム</a>
-                <a href="{{ url_for('logout') }}">ログアウト</a>
+                <a href="{{ url_for('home') }}" class="button">ホーム</a>
+                <a href="{{ url_for('logout') }}" class="button">ログアウト</a>
             </nav>
             {% else %}
             <nav>
-                <a href="{{ url_for('login') }}">ログイン</a>
-                <a href="{{ url_for('register') }}">登録</a>
+                <h3>新規の方は登録をおねがいします</h3>
+                <a href="{{ url_for('login') }}" class="button">ログイン</a>
+                <a href="{{ url_for('register') }}" class="button">登録</a>
             </nav>
             {% endif %}
         </div>
