@@ -5,6 +5,40 @@ body {
     background-color: #f9f9f9;
 }
 
+.header-container {
+    text-align: center;
+}
+
+.banner {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    margin-bottom: 20px;
+}
+
+nav {
+    margin-top: 10px;
+}
+
+.button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 5px;
+    font-size: 16px;
+    text-align: center;
+    color: white;
+    background-color: #007BFF;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+.button:hover {
+    background-color: #0056b3;
+}
+
+/* 
 header {
     background-color: #ffe4b2;
     padding: 20px;
@@ -33,7 +67,7 @@ nav a {
     color: #333;
     font-size: 1rem;
 }
-
+*/
 main {
     padding: 20px;
 }
